@@ -3,7 +3,6 @@ package com.mosken.rodrigo.letscode.challenge.authorizationapi.adapters.rest.err
 import com.mosken.rodrigo.letscode.challenge.authorizationapi.adapters.exceptions.InvalidResourceException;
 import com.mosken.rodrigo.letscode.challenge.authorizationapi.adapters.exceptions.LogInException;
 import com.mosken.rodrigo.letscode.challenge.authorizationapi.adapters.rest.errorhandler.json.ApiErrorResponse;
-import com.mosken.rodrigo.letscode.challenge.authorizationapi.entities.exceptions.EntityException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +17,16 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class CustomRestControllerErrorHandler {
 
+    @ExceptionHandler(value = {InvalidResourceException.class})
+    protected ResponseEntity<ApiErrorResponse> handleInvalidResourseException(Exception e) {
+        var status = HttpStatus.BAD_REQUEST;
+        var msg = retrieveMessage(e);
+        return buildResponseEntity(status, msg);
+    }
 
     @ExceptionHandler(value = {LogInException.class})
-    protected ResponseEntity<ApiErrorResponse> handleNotFoundException(Exception e) {
-        var status = HttpStatus.FORBIDDEN;
+    protected ResponseEntity<ApiErrorResponse> handleLogInException(Exception e) {
+        var status = HttpStatus.UNAUTHORIZED;
         var msg = retrieveMessage(e);
         return buildResponseEntity(status, msg);
     }

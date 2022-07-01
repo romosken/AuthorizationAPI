@@ -29,33 +29,36 @@ public class LogInImpl implements ILogIn {
     @Override
     public LogInResponse logIn(LogInRequest request) {
 
-        var validatedPassword = validatePassword(request.getPassword());
+        var validatedRequest = validateRequest(request);
 
-        var user = getUserValidated(request.getUsername(), request.getEmail(), validatedPassword);
+        var user = getUserValidated(validatedRequest.getUsername(), validatedRequest.getEmail(), validatedRequest.getPassword());
 
         return buildLogInResponse(user);
     }
 
-    private String validatePassword(String password) {
+    private LogInRequest validateRequest(LogInRequest request) {
+        if (validateString(request.getUsername()) && validateString(request.getEmail()))
+            throw new InvalidUserException(LOG_IN_FAILED);
+        var password = request.getPassword();
         if (validateString(password))
+            //TODO: Adicionar aqui o cache para senha errada
             throw new InvalidPasswordException(LOG_IN_FAILED);
-        return encryptPassword(password);
+        request.setPassword(encryptPassword(password));
+        return request;
 
     }
 
     private User getUserValidated(String username, String email, String password) {
 
-        if (validateString(username))
+        if (!validateString(username))
             return buildUserEntity(iLogInService.verifyUserByUsername(username, password));
-        if (validateString(email))
-            return buildUserEntity(iLogInService.verifyUserByUsername(username, password));
-
-        throw new InvalidUserException(LOG_IN_FAILED);
+        else
+            return buildUserEntity(iLogInService.verifyUserByEmail(email, password));
     }
 
     private boolean validateString(String text) {
 
-        return !(Objects.isNull(text) || text.isBlank());
+        return Objects.isNull(text) || text.isBlank();
     }
 
     private User buildUserEntity(UserDto user) {
@@ -71,8 +74,8 @@ public class LogInImpl implements ILogIn {
         return LogInResponse.builder()
                 .token(iLogInService.generateToken(Map.of(
                         "sub", response.getUsername(),
-                        "exp", new Date(System.currentTimeMillis() + EXPIRATION_TIME),
                         "iat", new Date(),
+                        "exp", new Date(System.currentTimeMillis() + EXPIRATION_TIME),
                         "jti", UUID.randomUUID().toString()
                 )))
                 .build();

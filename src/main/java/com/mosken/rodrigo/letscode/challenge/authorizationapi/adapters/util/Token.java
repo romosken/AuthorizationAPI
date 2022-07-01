@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.Map;
 
 @Service
@@ -17,8 +16,7 @@ import java.util.Map;
 public class Token {
 
     @Value("${jwt.secret}")
-    private final String secret;
-
+    private String secret;
 
     public String createToken(Map<String, Object> claims) {
         return Jwts.builder()
@@ -38,10 +36,11 @@ public class Token {
 
     public boolean verifyToken(String token) {
         try {
-            return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody().getExpiration().before(new Date());
+            Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
         } catch (Exception e) {
             return false;
         }
+        return true;
     }
 
 }
