@@ -1,0 +1,25 @@
+server:
+    port: 8080
+
+jwt:
+    secret: "RWZ1V2dDRHRpR01peWx6Mmg3a2txbkJIaVY2dU5zSEtwMkFKYVRsSGdRV0R3SkdFUzZ6WVZOWnl2THdtR1o2"
+
+spring:
+    jpa:
+        hibernate:
+            ddl-auto: none
+
+    datasource:
+        url: jdbc:mysql://localhost:3333/cinecriticas
+        username: root
+        password: root
+        driver-class-name: com.mysql.cj.jdbc.Driver
+
+    redis:
+        url: redis://localhost:7080
+        database: 0
+        host: localhost
+        port: 7080
+        password: "redispassword"
+        timeout: 60000
+
