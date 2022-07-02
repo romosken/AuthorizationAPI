@@ -91,8 +91,8 @@ public class LogInImpl implements ILogIn {
         return LogInResponse.builder()
                 .token(iLogInService.generateToken(Map.of(
                         "sub", response.getUsername(),
-                        "iat", new Date().toString(),
-                        "exp", new Date(System.currentTimeMillis() + EXPIRATION_TIME).toString(),
+                        "iat", new Date(),
+                        "exp", new Date(System.currentTimeMillis() + EXPIRATION_TIME),
                         "jti", UUID.randomUUID().toString()
                 )))
                 .build();
