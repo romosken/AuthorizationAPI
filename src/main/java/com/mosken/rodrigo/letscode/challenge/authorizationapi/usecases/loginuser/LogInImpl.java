@@ -1,6 +1,6 @@
 package com.mosken.rodrigo.letscode.challenge.authorizationapi.usecases.loginuser;
 
-import com.mosken.rodrigo.letscode.challenge.authorizationapi.domain.dto.UserDto;
+import com.mosken.rodrigo.letscode.challenge.authorizationapi.adapters.mysql.domain.UserBean;
 import com.mosken.rodrigo.letscode.challenge.authorizationapi.entities.Role;
 import com.mosken.rodrigo.letscode.challenge.authorizationapi.entities.User;
 import com.mosken.rodrigo.letscode.challenge.authorizationapi.usecases.loginuser.exception.InvalidPasswordException;
@@ -12,18 +12,16 @@ import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.Date;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class LogInImpl implements ILogIn {
 
     private final ILogInService iLogInService;
+//    private final IManageLogInAttemptsService iManageLogInAttemptsService;
     private static final String LOG_IN_FAILED = "Username/email or password invalid!";
-
+    private static final String ATTEMPTS_EXCEEDED = "Log in attempts exceeded, try again later!";
     private static final long EXPIRATION_TIME = 3_600_000;
 
     @Override
@@ -31,29 +29,27 @@ public class LogInImpl implements ILogIn {
 
         var validatedRequest = validateRequest(request);
 
-        var user = getUserValidated(validatedRequest.getUsername(), validatedRequest.getEmail(), validatedRequest.getPassword());
+        var optionalUser = iLogInService.verifyUserByUsername(validatedRequest.getUsername(), validatedRequest.getPassword());
+
+        var validatedUser = validateUser(optionalUser, validatedRequest);
+
+        var user = buildUserEntity(validatedUser);
 
         return buildLogInResponse(user);
     }
 
     private LogInRequest validateRequest(LogInRequest request) {
-        if (validateString(request.getUsername()) && validateString(request.getEmail()))
+        if (validateString(request.getUsername()))
             throw new InvalidUserException(LOG_IN_FAILED);
+
         var password = request.getPassword();
+
         if (validateString(password))
-            //TODO: Adicionar aqui o cache para senha errada
-            throw new InvalidPasswordException(LOG_IN_FAILED);
+            manageAttempt(request);
+
         request.setPassword(encryptPassword(password));
+
         return request;
-
-    }
-
-    private User getUserValidated(String username, String email, String password) {
-
-        if (!validateString(username))
-            return buildUserEntity(iLogInService.verifyUserByUsername(username, password));
-        else
-            return buildUserEntity(iLogInService.verifyUserByEmail(email, password));
     }
 
     private boolean validateString(String text) {
@@ -61,12 +57,33 @@ public class LogInImpl implements ILogIn {
         return Objects.isNull(text) || text.isBlank();
     }
 
-    private User buildUserEntity(UserDto user) {
+    private void manageAttempt(LogInRequest request) {
+
+//        var username = request.getUsername();
+//        if (iManageLogInAttemptsService.getFailedLogInAttempts(username).getAttempts() > 3)
+//            throw new AttemptsExceededException(ATTEMPTS_EXCEEDED);
+
+//        iManageLogInAttemptsService.insertFailedLogIn(username);
+        throw new InvalidPasswordException(LOG_IN_FAILED);
+    }
+
+    private UserBean validateUser(Optional<UserBean> optionalUser, LogInRequest request) {
+
+        if (optionalUser.isPresent()) {
+//            iManageLogInAttemptsService.deleteFailedAttempts(request.getUsername());
+            return optionalUser.get();
+        }
+//        iManageLogInAttemptsService.insertFailedLogIn(request.getUsername());
+        throw new InvalidPasswordException(LOG_IN_FAILED);
+    }
+
+    private User buildUserEntity(UserBean user) {
+
         return User.builder()
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .xp(user.getXp())
-                .role(Role.builder().name(user.getRole()).build())
+                .role(Role.builder().name(user.getRole().getName()).build())
                 .build();
     }
 
@@ -74,8 +91,8 @@ public class LogInImpl implements ILogIn {
         return LogInResponse.builder()
                 .token(iLogInService.generateToken(Map.of(
                         "sub", response.getUsername(),
-                        "iat", new Date(),
-                        "exp", new Date(System.currentTimeMillis() + EXPIRATION_TIME),
+                        "iat", new Date().toString(),
+                        "exp", new Date(System.currentTimeMillis() + EXPIRATION_TIME).toString(),
                         "jti", UUID.randomUUID().toString()
                 )))
                 .build();

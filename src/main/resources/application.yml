@@ -14,3 +14,12 @@ spring:
         username: root
         password: root
         driver-class-name: com.mysql.cj.jdbc.Driver
+
+    redis:
+        url: redis://localhost:7080
+        database: 0
+        host: localhost
+        port: 7080
+        password: "redispassword"
+        timeout: 60000
+

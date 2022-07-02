@@ -33,14 +33,4 @@ public class Token {
                 .setSigningKey(secret)
                 .parseClaimsJws(token);
     }
-
-    public boolean verifyToken(String token) {
-        try {
-            Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
-        } catch (Exception e) {
-            return false;
-        }
-        return true;
-    }
-
 }

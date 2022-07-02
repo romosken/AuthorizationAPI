@@ -21,13 +21,11 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LogInResponse> logInUser(
-            @RequestHeader(required = false) String username,
-            @RequestHeader(required = false) String email,
+            @RequestHeader String username,
             @RequestHeader String password
     ) {
         var request = LogInRequest.builder()
                 .username(username)
-                .email(email)
                 .password(password)
                 .build();
         return ResponseEntity.ok(iLogIn.logIn(request));
